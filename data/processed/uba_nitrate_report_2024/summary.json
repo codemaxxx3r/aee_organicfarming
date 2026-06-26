@@ -1,0 +1,14 @@
+{
+  "source_workbook": "/Volumes/Samsung4TB/GitHub/aee_organicfarming/data/raw/uba_nitrate_report_2024/692b5285-78ca-4081-aa31-4b327cf0105f_XLSX/Download_Daten_Nitratbericht_2024.xlsx",
+  "groundwater_stations_de": 767,
+  "groundwater_panel_rows_de": 7311,
+  "groundwater_stations_ni": 103,
+  "groundwater_panel_rows_ni": 1111,
+  "year_min": 2012,
+  "year_max": 2022,
+  "outputs": [
+    "/Volumes/Samsung4TB/GitHub/aee_organicfarming/data/processed/uba_nitrate_report_2024/gw_stations_de.csv",
+    "/Volumes/Samsung4TB/GitHub/aee_organicfarming/data/processed/uba_nitrate_report_2024/gw_nitrate_panel_de.csv",
+    "/Volumes/Samsung4TB/GitHub/aee_organicfarming/data/processed/uba_nitrate_report_2024/gw_nitrate_panel_ni.csv"
+  ]
+}

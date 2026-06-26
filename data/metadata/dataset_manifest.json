@@ -1,0 +1,17 @@
+[
+  {
+    "dataset_id": "uba_nitrate_report_2024_xlsx",
+    "title": "UBA Nitratbericht 2024 data download",
+    "source": "Umweltbundesamt (UBA) / Bundeslaender",
+    "url": "https://gis.uba.de/daten/692b5285-78ca-4081-aa31-4b327cf0105f_XLSX.zip",
+    "output": "uba_nitrate_report_2024/692b5285-78ca-4081-aa31-4b327cf0105f_XLSX.zip",
+    "kind": "direct",
+    "license": "CC BY 4.0 according to UBA CSW metadata",
+    "temporal_coverage": "2012-01-01 to 2022-12-31",
+    "spatial_coverage": "Germany; groundwater and surface-water monitoring stations",
+    "spatial_resolution": "Monitoring-station table in XLSX format; coordinates included according to UBA app metadata",
+    "description": "Current UBA Nitratbericht 2024 data used by the UBA nitrate web application. Primary candidate for the nitrate target variable because it is a tabular station-by-year data source rather than a map-only shapefile.",
+    "notes": "The workbook contains both groundwater and surface-water records; filter to Grundwasser before econometric panel construction.",
+    "large": false
+  }
+]
