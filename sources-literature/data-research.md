@@ -126,7 +126,7 @@ Alternativ zu BORIS könnten europaweit standardisierte Landnutzungsdaten aus **
 
 ---
 
-# Geplante Datenintegration
+## 6. Geplante Datenintegration und Methoden
 
 Derzeit erscheint folgende Kombination sinnvoll:
 
@@ -137,3 +137,32 @@ Derzeit erscheint folgende Kombination sinnvoll:
 5. Boden- und Hydrogeologiedaten (NIBIS)
 
 Die Verknüpfung der Datensätze kann – je nach Datenquelle – über räumliche Geometrien (Shapefiles), Gemeinden (GEN/AGS), Wasserkörper, Messstellen oder Koordinaten erfolgen.
+
+### 6.1 Identifikation relevanter Veränderungen innerhalb der Daten für Control  und Treatment Gruppierung
+
+Nachdem alle relevanten Datensätze zu einem gemeinsamen Paneldatensatz zusammengeführt wurden, soll der Fokus auf diejenigen Messstationen bzw. Zeiträume gelegt werden, in denen sich die erklärenden Variablen besonders stark verändert haben.
+
+Dabei steht **nicht** die Veränderung der Nitratwerte im Vordergrund (diese bilden die Zielvariable), sondern insbesondere Änderungen in der landwirtschaftlichen Bewirtschaftung. Von besonderem Interesse wären beispielsweise:
+
+- eine Umstellung auf einen höheren Anteil organischer bzw. ökologischer Bewirtschaftungsmethoden,
+- Veränderungen im Einsatz von Düngemitteln oder Pflanzenschutzmitteln,
+- weitere relevante Änderungen der landwirtschaftlichen Nutzung.
+
+Die Idee besteht darin, natürliche "Behandlungseffekte" (treatments) zu identifizieren und anschließend zu untersuchen, wie sich diese Änderungen zeitlich auf die Nitratkonzentrationen im Grundwasser auswirken.
+
+Falls geeignete Daten zur Bewirtschaftung nicht verfügbar sind, könnten alternativ zeitliche Veränderungen von Boden- oder Standortmerkmalen betrachtet werden. Aufgrund der höheren Komplexität erscheint die Analyse von Änderungen der landwirtschaftlichen Bewirtschaftung jedoch derzeit als der vielversprechendere Ansatz.
+
+### 6.2 Methodik und technische Umsetzung
+
+Die in diesem Dokument zusammengestellten Datensätze bilden die Grundlage für die weitere Analyse. Im nächsten Schritt werden die methodischen Ansätze sowie die geplante technische Umsetzung dokumentiert.
+
+Dazu gehören unter anderem:
+
+- die Aufbereitung und Zusammenführung der Datensätze zu einem Paneldatensatz,
+- Verfahren zur räumlichen Verknüpfung (Spatial Joins) und Datenbereinigung,
+- die Identifikation relevanter Veränderungen in den erklärenden Variablen,
+- statistische und kausale Analyseverfahren (z. B. Panelmodelle, Difference-in-Differences oder Event Studies),
+- sowie die verwendeten Software-Tools, Bibliotheken und der geplante Workflow.
+
+Die Details hierzu werden im separaten Dokument **`methodik_und_tools.md`** beschrieben.
+
