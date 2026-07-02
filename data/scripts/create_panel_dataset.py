@@ -23,6 +23,13 @@ DEFAULT_DYNAMIC_WORLD = (
     / "processed"
     / "dynamic_world_station_year_ni.csv"
 )
+DEFAULT_CORINE = (
+    ROOT
+    / "data"
+    / "corine_land_cover"
+    / "processed"
+    / "corine_station_year_ni.csv"
+)
 DEFAULT_OUTPUT = ROOT / "data" / "dataset" / "gw_nitrate_panel_ni.csv"
 KEY_COLUMNS = ("station_id", "year")
 
@@ -54,31 +61,34 @@ def index_unique(
     return index
 
 
-def merge(
-    uba_path: Path,
-    dynamic_world_path: Path | None,
+def merge_covariates(
+    base_columns: list[str],
+    base_rows: list[dict[str, str]],
+    covariate_path: Path,
+    label: str,
 ) -> tuple[list[str], list[dict[str, str]], int]:
-    uba_columns, uba_rows = read_csv(uba_path)
-    index_unique(uba_rows, uba_path)
-    if dynamic_world_path is None:
-        return uba_columns, uba_rows, 0
-
-    dynamic_columns, dynamic_rows = read_csv(dynamic_world_path)
-    dynamic_index = index_unique(dynamic_rows, dynamic_world_path)
+    covariate_source_columns, covariate_rows = read_csv(covariate_path)
+    covariate_index = index_unique(covariate_rows, covariate_path)
     covariate_columns = [
-        column for column in dynamic_columns if column not in KEY_COLUMNS
+        column
+        for column in covariate_source_columns
+        if column not in KEY_COLUMNS
     ]
-    unexpected_keys = sorted(set(dynamic_index) - {row_key(row) for row in uba_rows})
+    overlapping = sorted(set(base_columns) & set(covariate_columns))
+    if overlapping:
+        raise ValueError(f"{label} columns already exist in panel: {overlapping}")
+    base_keys = {row_key(row) for row in base_rows}
+    unexpected_keys = sorted(set(covariate_index) - base_keys)
     if unexpected_keys:
         print(
-            "Ignoring "
-            f"{len(unexpected_keys)} Dynamic World station-years without nitrate data"
+            f"Ignoring {len(unexpected_keys)} {label} station-years "
+            "without nitrate data"
         )
 
     matched = 0
     output = []
-    for row in uba_rows:
-        covariates = dynamic_index.get(row_key(row))
+    for row in base_rows:
+        covariates = covariate_index.get(row_key(row))
         if covariates is not None:
             matched += 1
         output.append(
@@ -88,7 +98,32 @@ def merge(
                 for column in covariate_columns
             }
         )
-    return uba_columns + covariate_columns, output, matched
+    return base_columns + covariate_columns, output, matched
+
+
+def merge(
+    uba_path: Path,
+    dynamic_world_path: Path | None,
+    corine_path: Path | None,
+) -> tuple[list[str], list[dict[str, str]], dict[str, int]]:
+    columns, rows = read_csv(uba_path)
+    index_unique(rows, uba_path)
+    matched = {}
+    if dynamic_world_path is not None:
+        columns, rows, matched["Dynamic World"] = merge_covariates(
+            columns,
+            rows,
+            dynamic_world_path,
+            "Dynamic World",
+        )
+    if corine_path is not None:
+        columns, rows, matched["CORINE"] = merge_covariates(
+            columns,
+            rows,
+            corine_path,
+            "CORINE",
+        )
+    return columns, rows, matched
 
 
 def write_csv(
@@ -113,11 +148,17 @@ def main() -> int:
         type=Path,
         default=DEFAULT_DYNAMIC_WORLD,
     )
+    parser.add_argument("--corine", type=Path, default=DEFAULT_CORINE)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument(
         "--allow-missing-dynamic-world",
         action="store_true",
-        help="Create an UBA-only panel when Dynamic World is not processed yet.",
+        help="Create the panel without Dynamic World when it is not processed yet.",
+    )
+    parser.add_argument(
+        "--allow-missing-corine",
+        action="store_true",
+        help="Create the panel without CORINE when it is not processed yet.",
     )
     args = parser.parse_args()
 
@@ -129,14 +170,21 @@ def main() -> int:
             raise FileNotFoundError(
                 f"Processed Dynamic World data not found: {dynamic_world}"
             )
-        print("Dynamic World is missing; creating an UBA-only panel")
+        print("Dynamic World is missing; creating the panel without Dynamic World")
         dynamic_world = None
 
-    columns, records, matched = merge(args.uba, dynamic_world)
+    corine = args.corine
+    if not corine.exists():
+        if not args.allow_missing_corine:
+            raise FileNotFoundError(f"Processed CORINE data not found: {corine}")
+        print("CORINE is missing; creating the panel without CORINE")
+        corine = None
+
+    columns, records, matched = merge(args.uba, dynamic_world, corine)
     write_csv(args.output, columns, records)
     print(f"Wrote {len(records)} panel rows")
-    if dynamic_world is not None:
-        print(f"Matched {matched} rows with Dynamic World")
+    for label, count in matched.items():
+        print(f"Matched {count} rows with {label}")
     print(args.output)
     return 0
 
