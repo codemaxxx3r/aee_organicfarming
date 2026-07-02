@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
-"""Prepare groundwater nitrate station-year tables from the UBA Nitratbericht XLSX."""
+"""Create the analysis panel, initially from UBA groundwater nitrate data."""
 
 from __future__ import annotations
 
 import argparse
 import csv
-import json
 from pathlib import Path
 from typing import Iterable
 
@@ -18,10 +17,9 @@ DEFAULT_XLSX = (
     / "data"
     / "raw"
     / "uba_nitrate_report_2024"
-    / "692b5285-78ca-4081-aa31-4b327cf0105f_XLSX"
     / "Download_Daten_Nitratbericht_2024.xlsx"
 )
-OUT_DIR = ROOT / "data" / "processed" / "uba_nitrate_report_2024"
+DEFAULT_OUTPUT = ROOT / "data" / "processed" / "gw_nitrate_panel_ni.csv"
 
 
 STATION_COLUMNS = {
@@ -121,7 +119,7 @@ def write_csv(path: Path, records: list[dict[str, object]]) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--xlsx", type=Path, default=DEFAULT_XLSX)
-    parser.add_argument("--out-dir", type=Path, default=OUT_DIR)
+    parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     args = parser.parse_args()
 
     if not args.xlsx.exists():
@@ -131,28 +129,14 @@ def main() -> int:
     nitrate = read_sheet(args.xlsx, "GW_Nitrat_MW", NITRATE_COLUMNS)
     panel = merge_panel(nitrate, stations)
     panel_ni = [row for row in panel if row["state_code"] == "NI"]
+    panel_ni.sort(key=lambda row: (str(row["station_id"]), int(row["year"])))
 
-    write_csv(args.out_dir / "gw_stations_de.csv", stations)
-    write_csv(args.out_dir / "gw_nitrate_panel_de.csv", panel)
-    write_csv(args.out_dir / "gw_nitrate_panel_ni.csv", panel_ni)
-
-    summary = {
-        "source_workbook": str(args.xlsx),
-        "groundwater_stations_de": len(stations),
-        "groundwater_panel_rows_de": len(panel),
-        "groundwater_stations_ni": len({row["station_id"] for row in panel_ni}),
-        "groundwater_panel_rows_ni": len(panel_ni),
-        "year_min": min(int(row["year"]) for row in panel),
-        "year_max": max(int(row["year"]) for row in panel),
-        "outputs": [
-            str(args.out_dir / "gw_stations_de.csv"),
-            str(args.out_dir / "gw_nitrate_panel_de.csv"),
-            str(args.out_dir / "gw_nitrate_panel_ni.csv"),
-        ],
-    }
-    args.out_dir.mkdir(parents=True, exist_ok=True)
-    (args.out_dir / "summary.json").write_text(json.dumps(summary, indent=2) + "\n", encoding="utf-8")
-    print(json.dumps(summary, indent=2))
+    write_csv(args.output, panel_ni)
+    station_count = len({str(row["station_id"]) for row in panel_ni})
+    years = [int(row["year"]) for row in panel_ni]
+    print(f"Wrote {len(panel_ni)} rows for {station_count} stations")
+    print(f"Years: {min(years)}-{max(years)}")
+    print(args.output)
     return 0
 
 
