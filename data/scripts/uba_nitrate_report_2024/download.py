@@ -12,16 +12,16 @@ import zipfile
 from pathlib import Path
 
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[3]
 DOWNLOAD_URL = (
     "https://gis.uba.de/daten/"
     "692b5285-78ca-4081-aa31-4b327cf0105f_XLSX.zip"
 )
-RAW_WORKBOOK = (
+OUTPUT = (
     ROOT
     / "data"
-    / "raw"
     / "uba_nitrate_report_2024"
+    / "raw"
     / "Download_Daten_Nitratbericht_2024.xlsx"
 )
 WORKBOOK_MEMBER = "Download_Daten_Nitratbericht_2024.xlsx"
@@ -32,7 +32,7 @@ def download_workbook(output: Path, overwrite: bool, insecure: bool) -> str:
         return "exists"
 
     output.parent.mkdir(parents=True, exist_ok=True)
-    archive_path = output.with_suffix(".zip.part")
+    archive_part = output.with_suffix(".zip.part")
     workbook_part = output.with_suffix(".xlsx.part")
     context = ssl._create_unverified_context() if insecure else None
     request = urllib.request.Request(
@@ -42,11 +42,11 @@ def download_workbook(output: Path, overwrite: bool, insecure: bool) -> str:
 
     try:
         with urllib.request.urlopen(request, timeout=120, context=context) as response:
-            with archive_path.open("wb") as handle:
+            with archive_part.open("wb") as handle:
                 while chunk := response.read(1024 * 1024):
                     handle.write(chunk)
 
-        with zipfile.ZipFile(archive_path) as archive:
+        with zipfile.ZipFile(archive_part) as archive:
             if WORKBOOK_MEMBER not in archive.namelist():
                 raise FileNotFoundError(
                     f"{WORKBOOK_MEMBER!r} is missing from the UBA download"
@@ -57,7 +57,7 @@ def download_workbook(output: Path, overwrite: bool, insecure: bool) -> str:
                         target.write(chunk)
         workbook_part.replace(output)
     finally:
-        archive_path.unlink(missing_ok=True)
+        archive_part.unlink(missing_ok=True)
         workbook_part.unlink(missing_ok=True)
 
     return "downloaded"
@@ -79,18 +79,23 @@ def main() -> int:
 
     try:
         status = download_workbook(
-            RAW_WORKBOOK,
+            OUTPUT,
             overwrite=args.overwrite,
             insecure=args.insecure,
         )
-    except (urllib.error.URLError, TimeoutError, zipfile.BadZipFile) as exc:
+    except (
+        FileNotFoundError,
+        urllib.error.URLError,
+        TimeoutError,
+        zipfile.BadZipFile,
+    ) as exc:
         print(f"UBA download failed: {exc}", file=sys.stderr)
         return 1
 
     print(f"UBA workbook: {status}")
-    print(RAW_WORKBOOK)
+    print(OUTPUT)
     return 0
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    raise SystemExit(main())
