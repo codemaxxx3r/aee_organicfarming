@@ -1,3 +1,4 @@
 certifi
 earthengine-api
 openpyxl
+shapely

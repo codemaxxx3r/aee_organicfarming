@@ -30,6 +30,13 @@ DEFAULT_CORINE = (
     / "processed"
     / "corine_station_year_ni.csv"
 )
+DEFAULT_REGIONALSTATISTIK = (
+    ROOT
+    / "data"
+    / "regionalstatistik"
+    / "processed"
+    / "regionalstatistik_station_year_ni.csv"
+)
 DEFAULT_OUTPUT = ROOT / "data" / "dataset" / "gw_nitrate_panel_ni.csv"
 KEY_COLUMNS = ("station_id", "year")
 
@@ -105,6 +112,7 @@ def merge(
     uba_path: Path,
     dynamic_world_path: Path | None,
     corine_path: Path | None,
+    regionalstatistik_path: Path | None,
 ) -> tuple[list[str], list[dict[str, str]], dict[str, int]]:
     columns, rows = read_csv(uba_path)
     index_unique(rows, uba_path)
@@ -122,6 +130,13 @@ def merge(
             rows,
             corine_path,
             "CORINE",
+        )
+    if regionalstatistik_path is not None:
+        columns, rows, matched["Regionalstatistik"] = merge_covariates(
+            columns,
+            rows,
+            regionalstatistik_path,
+            "Regionalstatistik",
         )
     return columns, rows, matched
 
@@ -149,6 +164,11 @@ def main() -> int:
         default=DEFAULT_DYNAMIC_WORLD,
     )
     parser.add_argument("--corine", type=Path, default=DEFAULT_CORINE)
+    parser.add_argument(
+        "--regionalstatistik",
+        type=Path,
+        default=DEFAULT_REGIONALSTATISTIK,
+    )
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument(
         "--allow-missing-dynamic-world",
@@ -159,6 +179,11 @@ def main() -> int:
         "--allow-missing-corine",
         action="store_true",
         help="Create the panel without CORINE when it is not processed yet.",
+    )
+    parser.add_argument(
+        "--allow-missing-regionalstatistik",
+        action="store_true",
+        help="Create the panel without Regionalstatistik when it is not processed.",
     )
     args = parser.parse_args()
 
@@ -180,7 +205,24 @@ def main() -> int:
         print("CORINE is missing; creating the panel without CORINE")
         corine = None
 
-    columns, records, matched = merge(args.uba, dynamic_world, corine)
+    regionalstatistik = args.regionalstatistik
+    if not regionalstatistik.exists():
+        if not args.allow_missing_regionalstatistik:
+            raise FileNotFoundError(
+                "Processed Regionalstatistik data not found: "
+                f"{regionalstatistik}"
+            )
+        print(
+            "Regionalstatistik is missing; creating the panel without it"
+        )
+        regionalstatistik = None
+
+    columns, records, matched = merge(
+        args.uba,
+        dynamic_world,
+        corine,
+        regionalstatistik,
+    )
     write_csv(args.output, columns, records)
     print(f"Wrote {len(records)} panel rows")
     for label, count in matched.items():

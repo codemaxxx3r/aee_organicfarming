@@ -27,6 +27,10 @@ python3 data/scripts/dynamic_world/preprocess.py
 python3 data/scripts/corine_land_cover/download.py --ee-project PROJECT_ID
 python3 data/scripts/corine_land_cover/preprocess.py
 
+# Administrative boundaries and Regionalstatistik
+python3 data/scripts/administrative_boundaries/download.py
+python3 data/scripts/regionalstatistik/preprocess.py
+
 # Final panel
 python3 data/scripts/create_panel_dataset.py
 ```
@@ -44,6 +48,11 @@ data/
   corine_land_cover/
     raw/
     processed/
+  administrative_boundaries/
+    raw/
+  regionalstatistik/
+    raw/
+    processed/
   dataset/
     gw_nitrate_panel_ni.csv
   scripts/
@@ -55,6 +64,10 @@ data/
       preprocess.py
     corine_land_cover/
       download.py
+      preprocess.py
+    administrative_boundaries/
+      download.py
+    regionalstatistik/
       preprocess.py
     create_panel_dataset.py
 ```
@@ -90,12 +103,24 @@ The final panel contains 1,111 nitrate observations for 103 Niedersachsen
 groundwater stations from 2012-2022. Dynamic World covariates cover 2016-2022.
 CORINE covariates cover 2012-2018 within the nitrate panel.
 
+Regionalstatistik snapshots for 2010, 2016 and 2020 are harmonized to current
+district boundaries and interpolated between census years. Current BKG VG250
+Landkreis polygons assign every station to exactly one district. The resulting
+covariates cover 2012-2020 in the nitrate panel. Livestock variables remain
+missing before 2020 because they are not reported in the 2010 and 2016 source
+files.
+
+The static station-to-district mapping is retained for 2021-2022 even though
+Regionalstatistik values are unavailable. `reg_data_available` distinguishes
+mapped rows from rows with usable time data.
+
 Missing optional sources can be explicitly allowed during development:
 
 ```bash
 python3 data/scripts/create_panel_dataset.py \
   --allow-missing-dynamic-world \
-  --allow-missing-corine
+  --allow-missing-corine \
+  --allow-missing-regionalstatistik
 ```
 
 Future sources should follow the same `raw/` and `processed/` structure. The
