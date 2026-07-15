@@ -1,4 +1,6 @@
 certifi
 earthengine-api
+matplotlib
 openpyxl
+pandas
 shapely
